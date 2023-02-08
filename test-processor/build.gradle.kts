@@ -1,0 +1,14 @@
+val kspVersion: String by project
+
+plugins {
+    kotlin("jvm")
+}
+
+group = "com.example"
+version = "1.0-SNAPSHOT"
+
+dependencies {
+    implementation("com.google.devtools.ksp:symbol-processing-api:$kspVersion")
+    implementation ("com.squareup:kotlinpoet:1.11.0")
+    implementation ("com.squareup:kotlinpoet-ksp:1.12.0")
+}
