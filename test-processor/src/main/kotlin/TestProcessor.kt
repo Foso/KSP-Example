@@ -8,8 +8,6 @@ class TestProcessor(private val codeGenerator: CodeGenerator, private val logger
     private var invoked = false
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val allFiles = resolver.getAllFiles().map { it.fileName }
-        logger.warn(allFiles.toList().toString())
         if (invoked) {
             return emptyList()
         }
@@ -29,15 +27,18 @@ class TestProcessor(private val codeGenerator: CodeGenerator, private val logger
             val imports = mutableSetOf<String>()
             imports.add(moduleClassDecl.qualifiedName!!.asString())
 
+            /**
+             * Create the source code for the functions
+             */
             val functionSource = moduleClassDecl.getDeclaredFunctions().toList().joinToString("\n") { funcDecl ->
 
                 val funcName = funcDecl.simpleName.asString()
                 val returnType = funcDecl.returnType?.resolve()
 
-                if (returnType == null || returnType.toString() == "Unit") {
+                if (returnType == null || returnType.isAssignableFrom(resolver.builtIns.unitType)) {
                     logger.error("Function needs return type", funcDecl)
                 } else {
-                    imports.add((funcDecl.returnType!!.resolve()).declaration.qualifiedName!!.asString())
+                    imports.add(returnType.declaration.qualifiedName!!.asString())
                 }
 
                 val provider = annotatedProviders.firstOrNull { providerClass ->
@@ -56,15 +57,16 @@ class TestProcessor(private val codeGenerator: CodeGenerator, private val logger
             }
 
             val fileSource = """
-                package $modulePackageName
-                ${imports.joinToString("\n") { "import $it" }}
-                class My${moduleName} : ${moduleName}{
-                $functionSource
-                }
+package $modulePackageName
+${imports.joinToString("\n") { "import $it" }}
+class My${moduleName} : ${moduleName}{
+$functionSource
+}
             """.trimIndent()
 
             codeGenerator.createNewFile(
-                dependencies = Dependencies(aggregating = false,
+                dependencies = Dependencies(
+                    aggregating = false,
                     sources = (annotatedModules + annotatedProviders).mapNotNull { it.containingFile }.toTypedArray()
                 ),
                 packageName = modulePackageName,

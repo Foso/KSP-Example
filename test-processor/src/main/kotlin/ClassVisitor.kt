@@ -1,18 +1,10 @@
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSNode
-import com.google.devtools.ksp.visitor.KSTopDownVisitor
-import java.io.OutputStreamWriter
+import com.google.devtools.ksp.symbol.KSVisitorVoid
 
-class ClassVisitor : KSTopDownVisitor<OutputStreamWriter, Unit>() {
-    override fun defaultHandler(node: KSNode, data: OutputStreamWriter) {
-    }
+class ClassVisitor : KSVisitorVoid() {
 
-    override fun visitClassDeclaration(
-        classDeclaration: KSClassDeclaration,
-        data: OutputStreamWriter
-    ) {
+    override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
         super.visitClassDeclaration(classDeclaration, data)
-        val symbolName = classDeclaration.simpleName.asString().lowercase()
-        data.write("    val $symbolName = true\n")
     }
+
 }
